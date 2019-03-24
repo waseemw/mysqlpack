@@ -1,8 +1,0 @@
-<component name="ArtifactManager">
-  <artifact type="jar" name="mysqlpack">
-    <output-path>$PROJECT_DIR$/out/artifacts/mysqlpack</output-path>
-    <root id="archive" name="io.krestek.mysqlpack.jar">
-      <element id="module-output" name="io.krestek.threadconn.main" />
-    </root>
-  </artifact>
-</component>
