@@ -7,18 +7,17 @@ import org.sql2o.Query;
 import org.sql2o.Sql2o;
 import org.sql2o.Sql2oException;
 
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-class Conn {
+class Conn implements AutoCloseable {
     private Connection con;
 
     Conn(Sql2o sql2o) {
         con = sql2o.open();
     }
 
-    private Query getQuery(String sql, HashMap<String, String> map, String token) {
+    private Query getQuery(String sql, Map<String, String> map) {
         Query query = con.createQuery(sql).throwOnMappingFailure(false);
         if (map != null)
             for (Map.Entry<String, String> entry : map.entrySet())
@@ -27,31 +26,22 @@ class Conn {
                         query.addParameter(entry.getKey(), entry.getValue());
                     } catch (NullPointerException ignored) {
                     }
-        try {
-            if (token != null && (map == null || !map.containsKey("token")))
-                query.addParameter("token", token);
-        } catch (NullPointerException ignored) {
-        }
 
         return query;
     }
 
-    <T> T fetchOne(Class<T> type, String sql, HashMap<String, String> map, String token) {
-        return getQuery(sql, map, token).executeAndFetch(type).get(0);
+    <T> List<T> fetch(Class<T> type, String sql, Map<String, String> map) {
+        return getQuery(sql, map).executeAndFetch(type);
     }
 
-    <T> List<T> fetch(Class<T> type, String sql, HashMap<String, String> map, String token) {
-        return getQuery(sql, map, token).executeAndFetch(type);
-    }
-
-    void execute(String sql, HashMap<String, String> map, String token) {
+    void execute(String sql, Map<String, String> map) {
         try {
-            getQuery(sql, map, token).executeUpdate();
+            getQuery(sql, map).executeUpdate();
         } catch (Sql2oException e) {
             if (e.getCause() instanceof MySQLTransactionRollbackException) {
                 try {
                     Thread.sleep(200);
-                    execute(sql, map, token);
+                    execute(sql, map);
                 } catch (InterruptedException ignored) {
                 }
             } else {
@@ -60,7 +50,8 @@ class Conn {
         }
     }
 
-    void close() {
+    @Override
+    public void close() {
         con.close();
         con = null;
     }
