@@ -11,9 +11,9 @@ import java.util.Map;
 
 @SuppressWarnings({"WeakerAccess", "unused"})
 public class ThreadConn {
-    private Sql2o sql2o;
+    private final Sql2o sql2o;
     private boolean connectionPerThread;
-    private ThreadLocal<Map<String, String>> threadParams;
+    private ThreadLocal<Map<String, Object>> threadParams;
     private ThreadLocal<Conn> localCon;
 
     public ThreadConn(int poolSize, String url, String username, String password) {
@@ -63,11 +63,11 @@ public class ThreadConn {
     }
 
 
-    public <T> T fetchOne(Class<T> type, String sql, Map<String, String> map) {
+    public <T> T fetchOne(Class<T> type, String sql, Map<String, Object> map) {
         return fetch(type, sql, map).get(0);
     }
 
-    public <T> List<T> fetch(Class<T> type, String sql, Map<String, String> map) {
+    public <T> List<T> fetch(Class<T> type, String sql, Map<String, Object> map) {
         if (connectionPerThread)
             return getCon().fetch(type, sql, mergeMaps(map));
 
@@ -76,7 +76,7 @@ public class ThreadConn {
         }
     }
 
-    public void execute(String sql, Map<String, String> map) {
+    public void execute(String sql, Map<String, Object> map) {
         if (connectionPerThread) {
             getCon().execute(sql, mergeMaps(map));
             return;
@@ -88,7 +88,7 @@ public class ThreadConn {
     }
 
 
-    public String getThreadParam(String key) {
+    public Object getThreadParam(String key) {
         return threadParams.get().get(key);
     }
 
@@ -109,11 +109,11 @@ public class ThreadConn {
         return localCon.get();
     }
 
-    private Map<String, String> mergeMaps(Map<String, String> map) {
+    private Map<String, Object> mergeMaps(Map<String, Object> map) {
         if (threadParams == null)
             return map;
 
-        Map<String, String> threadMap = threadParams.get();
+        Map<String, Object> threadMap = threadParams.get();
 
         if (map == null)
             return threadMap;

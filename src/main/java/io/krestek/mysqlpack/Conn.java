@@ -17,10 +17,10 @@ class Conn implements AutoCloseable {
         con = sql2o.open();
     }
 
-    private Query getQuery(String sql, Map<String, String> map) {
+    private Query getQuery(String sql, Map<String, Object> map) {
         Query query = con.createQuery(sql).throwOnMappingFailure(false);
         if (map != null)
-            for (Map.Entry<String, String> entry : map.entrySet())
+            for (Map.Entry<String, Object> entry : map.entrySet())
                 if (!entry.getKey().startsWith("_"))
                     try {
                         query.addParameter(entry.getKey(), entry.getValue());
@@ -30,11 +30,11 @@ class Conn implements AutoCloseable {
         return query;
     }
 
-    <T> List<T> fetch(Class<T> type, String sql, Map<String, String> map) {
+    <T> List<T> fetch(Class<T> type, String sql, Map<String, Object> map) {
         return getQuery(sql, map).executeAndFetch(type);
     }
 
-    void execute(String sql, Map<String, String> map) {
+    void execute(String sql, Map<String, Object> map) {
         try {
             getQuery(sql, map).executeUpdate();
         } catch (Sql2oException e) {
